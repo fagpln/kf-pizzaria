@@ -1,140 +1,268 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>KF Pizzaria & Tapiocaria</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KF Pizzaria & Tapiocaria</title>
+
+<style>
+/* ================= RESET E BODY ================= */
+body {
+  font-family: Arial, sans-serif;
+  background:#0e0e0e;
+  color:#fff;
+  margin:0;
+  padding-bottom:250px;
+}
+
+/* ================= HEADER ================= */
+header {
+  background:#000;
+  color:#fff;
+  text-align:center;
+  padding:20px;
+}
+header img {
+  max-width:360px;
+  width:100%;
+  height:auto;
+  display:block;
+  margin:0 auto;
+}
+header span {
+  font-size:22px;
+  font-weight:bold;
+  color:#00ff66;
+}
+@media (max-width:600px){
+  header img { max-width:300px; }
+}
+
+/* ================= NAV ================= */
+nav {
+  display:flex;
+  justify-content:space-around;
+  background:#111;
+  padding:10px;
+}
+nav button {
+  flex:1;
+  margin:5px;
+  padding:10px;
+  font-size:16px;
+  background:#111;
+  color:#00ff66;
+  border:2px solid #00ff66;
+  border-radius:8px;
+}
+
+/* ================= SEÇÕES ================= */
+section {
+  padding:15px;
+}
+.produto {
+  border-bottom:1px solid #333;
+  padding:10px 0;
+}
+.produto button {
+  background:#00ff66;
+  border:none;
+  padding:6px 10px;
+  border-radius:6px;
+  font-weight:bold;
+}
+
+/* ================= CARRINHO ================= */
+#carrinho {
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  background:#000;
+  border-top:2px solid #00ff66;
+  padding:10px;
+}
+</style>
 </head>
+
 <body>
 
 <header>
-  <h1>KF Pizzaria & Tapiocaria</h1>
+  <img src="logo.png" alt="KF Pizzaria">
+  <span>Pedidos Online</span>
 </header>
 
-<main>
+<nav>
+  <button onclick="mostrar('pizzas')">🍕 Pizzas</button>
+  <button onclick="mostrar('doces')">🍫 Doces</button>
+  <button onclick="mostrar('tapiocas')">🌯 Tapiocas</button>
+</nav>
 
-  <!-- CARDÁPIO (EXEMPLO – mantenha o seu se já existir) -->
-  <section id="cardapio">
-    <button onclick="adicionarItem('Pizza Mussarela', 30)">Pizza Mussarela - R$30</button>
-    <button onclick="adicionarItem('Pizza Calabresa', 35)">Pizza Calabresa - R$35</button>
-  </section>
+<!-- ================= CARDÁPIO ================= -->
 
-  <!-- CARRINHO -->
-  <section id="carrinho">
-    <h3>🛒 Seu Pedido</h3>
-    <div id="listaCarrinho"></div>
-    <p><strong>Total:</strong> R$ <span id="total">0.00</span></p>
-  </section>
+<section id="pizzas">
+  <h2>🍕 Pizzas Salgadas</h2>
 
-  <!-- DADOS DO CLIENTE -->
-  <section id="dados">
-    <input type="text" id="nome" placeholder="Seu nome">
-    <input type="text" id="endereco" placeholder="Endereço completo">
-    
-    <select id="pagamento">
-      <option value="">Forma de pagamento</option>
-      <option value="Dinheiro">Dinheiro</option>
-      <option value="Cartão">Cartão</option>
-      <option value="Pix">Pix</option>
-    </select>
+  <div class="produto">
+    <strong>Mussarela</strong><br>
+    25cm R$30 | 35cm R$45
+    <br>
+    <button onclick="adicionar('Pizza Mussarela 25cm',30)">25cm</button>
+    <button onclick="adicionar('Pizza Mussarela 35cm',45)">35cm</button>
+  </div>
 
-    <input type="text" id="troco" placeholder="Troco para quanto? (se dinheiro)">
-    <textarea id="observacao" placeholder="Observações"></textarea>
+  <div class="produto">
+    <strong>Calabresa</strong><br>
+    25cm R$32 | 35cm R$48
+    <br>
+    <button onclick="adicionar('Pizza Calabresa 25cm',32)">25cm</button>
+    <button onclick="adicionar('Pizza Calabresa 35cm',48)">35cm</button>
+  </div>
+</section>
 
-    <button onclick="finalizarPedido()">📲 Finalizar Pedido</button>
-  </section>
+<section id="doces" style="display:none">
+  <h2>🍫 Pizzas Doces</h2>
 
-</main>
+  <div class="produto">
+    <strong>Banana com Canela</strong><br>
+    25cm R$30 | 35cm R$45
+    <br>
+    <button onclick="adicionar('Pizza Banana 25cm',30)">25cm</button>
+    <button onclick="adicionar('Pizza Banana 35cm',45)">35cm</button>
+  </div>
 
-<!-- FIREBASE -->
+  <div class="produto">
+    <strong>Prestígio</strong><br>
+    <button onclick="adicionar('Pizza Prestígio 25cm',30)">25cm</button>
+    <button onclick="adicionar('Pizza Prestígio 35cm',45)">35cm</button>
+  </div>
+</section>
+
+<section id="tapiocas" style="display:none">
+  <h2>🌯 Tapiocas</h2>
+
+  <div class="produto">
+    <strong>Frango com Catupiry</strong> R$12
+    <br>
+    <button onclick="adicionar('Tapioca Frango',12)">Adicionar</button>
+  </div>
+</section>
+
+<!-- ================= CARRINHO ================= -->
+
+<div id="carrinho">
+  <h3>🛒 Seu Pedido</h3>
+  <div id="lista"></div>
+  <p><strong>Total:</strong> R$ <span id="total">0.00</span></p>
+
+  <input id="nome" placeholder="Seu nome">
+  <input id="endereco" placeholder="Endereço completo">
+
+  <select id="pagamento">
+    <option value="">Forma de pagamento</option>
+    <option>Dinheiro</option>
+    <option>Cartão</option>
+    <option>Pix</option>
+  </select>
+
+  <input id="troco" placeholder="Troco para quanto?">
+  <textarea id="observacao" placeholder="Observações"></textarea>
+
+  <button onclick="finalizarPedido()">📲 Finalizar Pedido</button>
+</div>
+
+<!-- ================= FIREBASE ================= -->
 <script src="firebase.js"></script>
 
 <script>
-  let carrinho = [];
-  let total = 0;
+let carrinho = [];
+let total = 0;
 
-  function adicionarItem(nome, preco){
-    const item = carrinho.find(i => i.nome === nome);
+function mostrar(id){
+  document.querySelectorAll("section").forEach(s => s.style.display="none");
+  document.getElementById(id).style.display="block";
+}
 
-    if(item){
-      item.quantidade++;
-    } else {
-      carrinho.push({ nome, preco, quantidade: 1 });
-    }
+function adicionar(nome, preco){
+  const item = carrinho.find(i => i.nome === nome);
+  if(item){
+    item.qtd++;
+  } else {
+    carrinho.push({ nome, preco, qtd:1 });
+  }
+  atualizarCarrinho();
+}
 
-    atualizarCarrinho();
+function atualizarCarrinho(){
+  const lista = document.getElementById("lista");
+  total = 0;
+  lista.innerHTML = "";
+
+  carrinho.forEach(i => {
+    total += i.preco * i.qtd;
+    lista.innerHTML += `<div>${i.nome} x${i.qtd}</div>`;
+  });
+
+  document.getElementById("total").innerText = total.toFixed(2);
+}
+
+/* ================= FINALIZAR PEDIDO (FIREBASE) ================= */
+
+function finalizarPedido(){
+  if(carrinho.length === 0){
+    alert("Carrinho vazio");
+    return;
   }
 
-  function atualizarCarrinho(){
-    const lista = document.getElementById("listaCarrinho");
-    const totalSpan = document.getElementById("total");
+  const nome = document.getElementById("nome").value.trim();
+  const endereco = document.getElementById("endereco").value.trim();
+  const pagamento = document.getElementById("pagamento").value;
+  const troco = document.getElementById("troco").value;
+  const observacao = document.getElementById("observacao").value;
 
-    lista.innerHTML = "";
-    total = 0;
-
-    carrinho.forEach(item => {
-      total += item.preco * item.quantidade;
-      lista.innerHTML += `<p>${item.nome} x${item.quantidade}</p>`;
-    });
-
-    totalSpan.textContent = total.toFixed(2);
+  if(!nome || !endereco || !pagamento){
+    alert("Preencha todos os dados");
+    return;
   }
 
-  function finalizarPedido(){
-    const nome = document.getElementById("nome").value.trim();
-    const endereco = document.getElementById("endereco").value.trim();
-    const pagamento = document.getElementById("pagamento").value;
-    const troco = document.getElementById("troco").value.trim();
-    const observacao = document.getElementById("observacao").value.trim();
+  // 🔥 SALVA NO FIREBASE
+  db.collection("pedidos").add({
+    nome,
+    endereco,
+    pagamento,
+    troco,
+    observacao,
+    itens: carrinho,
+    total,
+    status: "Pendente",
+    criadoEm: new Date()
+  });
 
-    if(!nome || !endereco || !pagamento || carrinho.length === 0){
-      alert("Preencha todos os dados e adicione itens.");
-      return;
-    }
+  // 📲 WHATSAPP
+  const mapa = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(endereco);
+  const itensTxt = carrinho.map(i => `- ${i.nome} x${i.qtd}`).join("\n");
 
-    const mapa = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(endereco)}`;
+  const msg =
+`🍕 *NOVO PEDIDO*
+👤 ${nome}
 
-    const itensTexto = carrinho
-      .map(i => `- ${i.nome} x${i.quantidade}`)
-      .join("\n");
-
-    let mensagem = `🍕 *NOVO PEDIDO - KF PIZZARIA*
-👤 Nome: ${nome}
 🧾 Pedido:
-${itensTexto}
-📍 Endereço: ${endereco}
-🌐 Mapa: ${mapa}
-💳 Pagamento: ${pagamento}
-💰 Total: R$ ${total.toFixed(2)}`;
+${itensTxt}
 
-    if(observacao){
-      mensagem += `\n📝 Observação: ${observacao}`;
-    }
+💰 Total: R$ ${total.toFixed(2)}
+💳 ${pagamento}
 
-    // ENVIA PARA WHATSAPP
-    window.open(
-      `https://wa.me/5521997437285?text=${encodeURIComponent(mensagem)}`,
-      "_blank"
-    );
+📍 Endereço:
+${endereco}
 
-    // SALVA NO FIREBASE
-    db.collection("pedidos").add({
-      nome,
-      endereco,
-      pagamento,
-      troco: troco || "",
-      observacao,
-      itens: carrinho,
-      total,
-      status: "Pendente",
-      criadoEm: new Date()
-    });
+🗺️ ${mapa}`;
 
-    carrinho = [];
-    atualizarCarrinho();
-    alert("Pedido enviado com sucesso!");
-  }
+  window.open("https://wa.me/5521997437285?text=" + encodeURIComponent(msg), "_blank");
+
+  carrinho = [];
+  atualizarCarrinho();
+  alert("Pedido enviado!");
+}
 </script>
 
 </body>
