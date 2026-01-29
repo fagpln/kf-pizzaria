@@ -227,6 +227,76 @@ async function finalizarPedido(){
   alert("Pedido enviado com sucesso!");
 }
 </script>
+<script type="module">
+import { db } from "./firebase.js";
+import { collection, addDoc, serverTimestamp }
+from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+/*
+  Sobrescreve APENAS a função finalizarPedido,
+  mantendo todo o resto do sistema intacto
+*/
+window.finalizarPedido = async function () {
+  const nome = document.getElementById("nome").value.trim();
+  const endereco = document.getElementById("endereco").value.trim();
+  const pagamento = document.getElementById("pagamento").value;
+  const observacao = document.getElementById("observacao").value.trim();
+  const troco = document.getElementById("troco")?.value || "";
+
+  if (!nome || !endereco || !pagamento || carrinho.length === 0) {
+    alert("Preencha todos os dados e adicione itens");
+    return;
+  }
+
+  // 🔥 SALVA NO FIREBASE
+  await addDoc(collection(db, "pedidos"), {
+    nome,
+    endereco,
+    pagamento,
+    troco,
+    observacao,
+    itens: [...carrinho],
+    total,
+    status: "Pendente",
+    criadoEm: serverTimestamp()
+  });
+
+  // 📲 WHATSAPP (mantido)
+  const enderecoMapa =
+    `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(endereco)}`;
+
+  const itensTexto = carrinho
+    .map(i => `- ${i.nome} x${i.quantidade}`)
+    .join("\n");
+
+  const mensagem =
+`🍕 *NOVO PEDIDO - KF PIZZARIA*
+👤 Nome: ${nome}
+
+🧾 Pedido:
+${itensTexto}
+
+📍 Endereço:
+${endereco}
+🌐 Mapa: ${enderecoMapa}
+
+💳 Pagamento: ${pagamento}
+💰 Total: R$ ${total.toFixed(2)}
+${observacao ? "\n📝 Obs: " + observacao : ""}`;
+
+  window.open(
+    `https://wa.me/5521997437285?text=${encodeURIComponent(mensagem)}`,
+    "_blank"
+  );
+
+  // Limpa carrinho
+  carrinho = [];
+  atualizarCarrinho();
+  atualizarBotaoAdicionar();
+  alert("Pedido enviado com sucesso!");
+};
+</script>
 
 </body>
 </html>
+
