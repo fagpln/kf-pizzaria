@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login Admin - KF Pizzaria & Tapiocaria</title>
+<style>
+body {
+  font-family: Arial,sans-serif;
+  background:#0e0e0e;
+  color:#fff;
+  margin:0;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+
+.container {
+  background:#111;
+  padding:30px 25px;
+  border-radius:12px;
+  width:90%;
+  max-width:400px;
+  text-align:center;
+  box-shadow:0 0 15px #00ff66;
+}
+
+header span {
+  font-size:24px;
+  color:#00ff66;
+  font-weight:bold;
+  display:block;
+  margin-bottom:25px;
+}
+
+input {
+  width:100%;
+  padding:10px;
+  margin:10px 0;
+  border-radius:6px;
+  border:none;
+}
+
+button {
+  width:100%;
+  padding:12px;
+  background:#ff6600;
+  color:#fff;
+  font-weight:bold;
+  font-size:16px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  margin-top:10px;
+  transition:all 0.3s ease;
+}
+
+button:hover { transform:scale(1.05); }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <span>Admin KF Pizzaria</span>
+  </header>
+
+  <input type="text" id="usuario" placeholder="Usuário">
+  <input type="password" id="senha" placeholder="Senha">
+  <button onclick="loginAdmin()">Entrar</button>
+</div>
+
+<script>
+// Credenciais do admin (você pode alterar)
+const adminUsuario = "admin";
+const adminSenha = "123456";
+
+function loginAdmin() {
+  const usuario = document.getElementById("usuario").value.trim();
+  const senha = document.getElementById("senha").value.trim();
+
+  if(usuario === adminUsuario && senha === adminSenha){
+    // Salvar sessão simples
+    localStorage.setItem("adminLogado", "true");
+    window.location.href = "admin.html"; // redireciona para painel
+  } else {
+    alert("Usuário ou senha incorretos!");
+  }
+}
+</script>
+
+</body>
+</html>
