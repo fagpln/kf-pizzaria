@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>KF Pizzaria & Tapiocaria</title>
-
 <style>
 /* ================= RESET E BODY ================= */
 body {
@@ -84,22 +83,14 @@ section.ativo { display:block; }
   color:#00ff66;
   transition:all 0.3s ease;
 }
-.produto button:hover, .produto-bebida button:hover {
-  transform:scale(1.05);
-  background:#00ff66;
-  color:#000;
-}
+.produto button:hover, .produto-bebida button:hover { transform:scale(1.05); background:#00ff66; color:#000; }
 .produto button.selected, .produto-bebida button.selected {
   background:#007bff;
   color:#fff;
   box-shadow:0 0 10px #00ff66;
   animation:pulse 0.5s ease;
 }
-@keyframes pulse {
-  0%{transform:scale(1);}
-  50%{transform:scale(1.1);}
-  100%{transform:scale(1);}
-}
+@keyframes pulse { 0%{transform:scale(1);}50%{transform:scale(1.1);}100%{transform:scale(1);} }
 
 /* ================= BOTÃO CARRINHO ================= */
 #botaoAdicionarCarrinho { 
@@ -142,13 +133,7 @@ section.ativo { display:block; }
 }
 
 /* ================= INPUTS ================= */
-input, select, textarea {
-  width:100%;
-  padding:8px;
-  margin:6px 0;
-  border-radius:6px;
-  border:none;
-}
+input, select, textarea { width:100%; padding:8px; margin:6px 0; border-radius:6px; border:none; }
 textarea { resize:none; }
 .finalizar {
   background:#00ff66;
@@ -163,11 +148,7 @@ textarea { resize:none; }
 }
 
 /* ================= PIZZA ================= */
-.tamanho-pizza {
-  margin:5px 0 10px 0;
-  display:flex;
-  gap:8px;
-}
+.tamanho-pizza { margin:5px 0 10px 0; display:flex; gap:8px; }
 .tamanho-pizza button {
   flex:1;
   padding:10px 0;
@@ -188,7 +169,6 @@ textarea { resize:none; }
 }
 </style>
 </head>
-
 <body>
 
 <header>
@@ -221,8 +201,7 @@ textarea { resize:none; }
   <div id="listaBebidas"></div>
 </section>
 
-<button id="botaoAdicionarCarrinho"
-  onclick="adicionarPizzaAoCarrinho(); adicionarTapiocaAoCarrinho();">
+<button id="botaoAdicionarCarrinho" onclick="adicionarPizzaAoCarrinho(); adicionarTapiocaAoCarrinho();">
   🛒 Adicionar ao Carrinho
 </button>
 
@@ -234,94 +213,202 @@ textarea { resize:none; }
   <h4>Finalizar Pedido</h4>
   <input id="nome" placeholder="Nome do cliente">
   <input id="endereco" placeholder="Endereço completo">
-
   <select id="pagamento" onchange="atualizarTrocoPix()">
     <option value="">Forma de pagamento</option>
     <option value="dinheiro">Dinheiro</option>
     <option value="cartao">Cartão</option>
     <option value="pix">Pix</option>
   </select>
-
   <div id="troco-container" style="display:none;">
     <input id="troco" placeholder="Troco para quanto (opcional)">
   </div>
-
   <textarea id="observacao" placeholder="Observações do pedido (opcional)" rows="2"></textarea>
-
   <button class="finalizar" onclick="finalizarPedido()">📲 Enviar Pedido</button>
 </div>
-
-<!-- 🔥 FIREBASE -->
 <script src="firebase.js"></script>
-
 <script>
-// ================= DADOS (INALTERADOS) =================
-/* TODO: aqui entra exatamente o mesmo JS de dados e funções
-   que você já tinha — mantido sem alterações */
-</script>
+// ================= DADOS =================
+const pizzas25=[{nome:"Mussarela",preco:24},{nome:"Presunto",preco:24},{nome:"Calabresa",preco:24},{nome:"3 Queijos",preco:24},{nome:"Marguerita",preco:24},{nome:"Alho",preco:24},{nome:"Mineira",preco:24},{nome:"Mista",preco:24},{nome:"Palmito",preco:24},{nome:"Portuguesa",preco:29},{nome:"Lombo Canadense",preco:29},{nome:"Peito de Peru",preco:29},{nome:"Frango C/Catupiry",preco:29},{nome:"Frango C/ Cheddar",preco:29},{nome:"Bacon com Ovos",preco:32},{nome:"Camarão C/Catupiry",preco:32},{nome:"Camarão C/Alho",preco:32},{nome:"BANANA com CANELA",preco:30},{nome:"PRESTIGIO",preco:30},{nome:"M&M",preco:30},{nome:"PAÇOCA",preco:30},{nome:"ROMEU E JULIETA",preco:30},{nome:"CARIBE",preco:30},{nome:"SENSAÇÃO",preco:30},{nome:"BANANA NEVADA",preco:30}];
+const pizzas35=pizzas25.map(p=>{let precoNovo=p.preco;if(p.preco===24)precoNovo=39;else if(p.preco===29)precoNovo=43;else if(p.preco===32)precoNovo=58;else if(p.preco===30)precoNovo=45;return{nome:p.nome,preco:precoNovo};});
 
-<script>
-// ================= FINALIZAR PEDIDO (FIREBASE) =================
+const tapiocaCategorias={
+  "🧀 Queijos":[{nome:"Mussarela",preco:10},{nome:"Minas",preco:10},{nome:"Cheddar",preco:10},{nome:"Requeijão",preco:10},{nome:"Catupiry",preco:10}],
+  "🥩 Proteínas":[{nome:"Frango",preco:13},{nome:"Calabresa",preco:10},{nome:"Presunto",preco:10},{nome:"Lombo Canadense",preco:13},{nome:"Peito de Peru",preco:13}],
+  "🍬 Doces":[{nome:"M&M",preco:10},{nome:"Doce de Leite",preco:10},{nome:"Goiabada",preco:10},{nome:"Paçoca",preco:10},{nome:"Nutella",preco:16},{nome:"Chocolate Branco",preco:14},{nome:"Chocolate Preto",preco:14}],
+  "🍓 Frutas":[{nome:"Coco",preco:10},{nome:"Abacaxi",preco:10},{nome:"Banana",preco:10},{nome:"Morango",preco:14}],
+  "🥗 Acompanhamento":[{nome:"Leite Condensado",preco:0},{nome:"Orégano",preco:0},{nome:"Tomate",preco:0},{nome:"Cebola",preco:0},{nome:"Granulado",preco:0}]
+};
+
+const bebidas=[{nome:"Água",preco:2.5},{nome:"Água c/ Gás",preco:3},{nome:"Guaracamp",preco:2.5},{nome:"Refrigerante Lata",preco:6},{nome:"Refrigerante 1L (GUARANA ANTARCTICA)",preco:8},{nome:"Refrigerante 1.5L (GUARANA ANTARCTICA)",preco:10},{nome:"Sukita Laranja",preco:10},{nome:"Sukita Uva",preco:10},{nome:"Sukita Limão",preco:10}];
+
+let carrinho=[],total=0,saboresPizzaSelecionados=[],recheiosTapiocaSelecionados=[],tamanhoSelecionado="";
+
+// ================= FUNÇÕES =================
+function mostrarMenu(id){
+  document.querySelectorAll("section").forEach(sec=>sec.classList.remove("ativo"));
+  document.getElementById(id).classList.add("ativo");
+  if(id==="pizzas") renderPizzas();
+  else if(id==="tapiocas") renderTapiocas();
+  else if(id==="bebidas") renderBebidas();
+}
+
+function renderPizzas(){
+  const div=document.getElementById("listaPizzas");
+  if(!div) return;
+  document.getElementById("t25").classList.toggle("selected",tamanhoSelecionado==="25cm");
+  document.getElementById("t35").classList.toggle("selected",tamanhoSelecionado==="35cm");
+  if(!tamanhoSelecionado){ div.innerHTML="<p><strong>Escolha o tamanho da Pizza acima</strong></p>"; return; }
+  const pizzas=tamanhoSelecionado==='25cm'?pizzas25:pizzas35;
+  div.innerHTML="<p><strong>Escolha os sabores (até 2)</strong></p>";
+  pizzas.forEach((p,i)=>{
+    const selected=saboresPizzaSelecionados.includes(p);
+    div.innerHTML+=`<div class="produto"><div><strong>${p.nome}</strong> — R$ ${p.preco.toFixed(2)}</div><button class="${selected?'selected':''}" onclick="selecionarSaborPizza(${i})">Selecionar</button></div>`;
+  });
+}
+
+function selecionarTamanho(t){ tamanhoSelecionado=t; saboresPizzaSelecionados=[]; renderPizzas(); }
+function selecionarSaborPizza(i){
+  const pizzas=tamanhoSelecionado==='25cm'?pizzas25:pizzas35;
+  const sabor=pizzas[i];
+  const idx=saboresPizzaSelecionados.indexOf(sabor);
+  if(idx>=0) saboresPizzaSelecionados.splice(idx,1);
+  else{ if(saboresPizzaSelecionados.length>=2){ alert("Você pode escolher no máximo 2 sabores"); return; } saboresPizzaSelecionados.push(sabor); }
+  renderPizzas();
+}
+
+function adicionarPizzaAoCarrinho(){
+  if(saboresPizzaSelecionados.length===0) return;
+  const maiorPreco=Math.max(...saboresPizzaSelecionados.map(s=>s.preco));
+  const nomes=saboresPizzaSelecionados.map(s=>s.nome).join(" + ");
+  adicionarAoCarrinho(`Pizza ${tamanhoSelecionado} (${nomes})`,maiorPreco);
+  saboresPizzaSelecionados=[]; tamanhoSelecionado=""; renderPizzas(); atualizarBotaoAdicionar();
+}
+
+function renderTapiocas(){
+  const div=document.getElementById("listaTapiocas");
+  if(!div) return;
+  div.innerHTML="<p><strong>Escolha até 2 recheios pagos + 1 Acompanhamento</strong></p>";
+  Object.keys(tapiocaCategorias).forEach(c=>{
+    div.innerHTML+=`<h3>${c}</h3>`;
+    tapiocaCategorias[c].forEach((r,i)=>{
+      const id=`${c}-${i}`.replace(/\s/g,"");
+      const selected=recheiosTapiocaSelecionados.includes(r);
+      div.innerHTML+=`<div class="produto" id="${id}"><span><strong>${r.nome}</strong> — R$ ${r.preco.toFixed(2)}</span><button id="btn-${id}" class="${selected?'selected':''}" onclick="selecionarRecheioTapioca('${c}',${i},'${id}')">Selecionar</button></div>`;
+    });
+  });
+}
+
+function selecionarRecheioTapioca(c,i,id){
+  const r=tapiocaCategorias[c][i];
+  const pagos=recheiosTapiocaSelecionados.filter(x=>x.preco>0);
+  const acomp=recheiosTapiocaSelecionados.find(x=>x.preco===0);
+  if(r.preco===0 && acomp && !recheiosTapiocaSelecionados.includes(r)){ alert("Você só pode escolher 1 Acompanhamento"); return; }
+  if(r.preco>0 && !recheiosTapiocaSelecionados.includes(r) && pagos.length>=2){ alert("Você só pode escolher até 2 recheios pagos"); return; }
+  const idx=recheiosTapiocaSelecionados.indexOf(r);
+  if(idx>=0) recheiosTapiocaSelecionados.splice(idx,1); else recheiosTapiocaSelecionados.push(r);
+  renderTapiocas(); atualizarBotaoAdicionar();
+}
+
+function adicionarTapiocaAoCarrinho(){
+  if(recheiosTapiocaSelecionados.length===0) return;
+  const pagos=recheiosTapiocaSelecionados.filter(r=>r.preco>0);
+  const acomp=recheiosTapiocaSelecionados.find(r=>r.preco===0);
+  const maiorPreco=pagos.length>0?Math.max(...pagos.map(r=>r.preco)):0;
+  let nomes=pagos.map(r=>r.nome); if(acomp) nomes.push(acomp.nome);
+  if(nomes.length>0) adicionarAoCarrinho(`Tapioca (${nomes.join(" + ")})`,maiorPreco);
+  recheiosTapiocaSelecionados=[]; renderTapiocas(); atualizarBotaoAdicionar();
+}
+
+function renderBebidas(){
+  const div=document.getElementById("listaBebidas");
+  if(!div) return;
+  bebidas.forEach((b,i)=>{ div.innerHTML+=`<div class="produto produto-bebida"><strong>${b.nome}</strong> — R$ ${b.preco.toFixed(2)}<button onclick="adicionarBebida(${i})">Adicionar</button></div>`; });
+}
+
+function adicionarBebida(i){ adicionarAoCarrinho(bebidas[i].nome,bebidas[i].preco); }
+
+function adicionarAoCarrinho(nome,preco){
+  const existente=carrinho.find(item=>item.nome===nome);
+  if(existente) existente.quantidade++; 
+  else carrinho.push({nome,preco,quantidade:1});
+  atualizarCarrinho();
+}
+
+function removerItem(i){ carrinho.splice(i,1); atualizarCarrinho(); }
+
+function atualizarCarrinho(){
+  const div=document.getElementById("itensCarrinho");
+  const totalSpan=document.getElementById("totalCarrinho");
+  div.innerHTML="";
+  total=0;
+  carrinho.forEach((item,index)=>{
+    total+=item.preco*item.quantidade;
+    div.innerHTML+=`<div>${item.nome} x${item.quantidade} — R$ ${(item.preco*item.quantidade).toFixed(2)} <button onclick="removerItem(${index})">❌</button></div>`;
+  });
+  totalSpan.innerText=total.toFixed(2);
+}
+
+function atualizarBotaoAdicionar(){
+  const botao=document.getElementById("botaoAdicionarCarrinho");
+  const pagos=saboresPizzaSelecionados.length>0?saboresPizzaSelecionados.length:recheiosTapiocaSelecionados.filter(r=>r.preco>0).length;
+  const acomp=recheiosTapiocaSelecionados.find(r=>r.preco===0)?1:0;
+  let texto="🛒 Adicionar ao Carrinho";
+  if(pagos>0||acomp>0){ texto+=" ("; if(pagos>0) texto+=`${pagos}/2`; if(acomp>0) texto+=`${pagos>0?" + ":""}${acomp} Acompanhamento`; texto+=")"; }
+  botao.innerText=texto;
+}
+
+// Troco / Pix
+function atualizarTrocoPix(){
+  const pagamento=document.getElementById("pagamento").value;
+  const container=document.getElementById("troco-container");
+  const trocoInput=document.getElementById("troco");
+  if(pagamento==="dinheiro"){ container.style.display="block"; trocoInput.value=""; }
+  else { container.style.display="none"; trocoInput.value=""; }
+}
+
+// ================= FINALIZAR PEDIDO =================
 function finalizarPedido(){
-  const nome = document.getElementById("nome").value.trim();
-  const endereco = document.getElementById("endereco").value.trim();
-  const pagamento = document.getElementById("pagamento").value;
-  const observacao = document.getElementById("observacao").value.trim();
-  const troco = document.getElementById("troco").value.trim();
-
-  if(!nome || !endereco || !pagamento || carrinho.length === 0){
-    alert("Preencha todos os dados e adicione itens");
-    return;
-  }
+  const nome=document.getElementById("nome").value.trim();
+  const endereco=document.getElementById("endereco").value.trim();
+  const pagamento=document.getElementById("pagamento").value;
+  const observacao=document.getElementById("observacao").value.trim();
+  const troco=document.getElementById("troco").value.trim();
+  if(!nome||!endereco||!pagamento||carrinho.length===0){ alert("Preencha todos os dados e adicione itens"); return; }
 
   let trocoTexto="", pixTexto="";
-  if(pagamento==="dinheiro" && troco) trocoTexto = `\n💵 Troco para: R$ ${troco}`;
-  if(pagamento==="pix") pixTexto = "\n📌 Chave Pix: fagpln@gmail.com";
+  if(pagamento==="dinheiro"&&troco) trocoTexto=`\n💵 Troco para: R$ ${troco}`;
+  if(pagamento==="pix") pixTexto="\n📌 Chave Pix: fagpln@gmail.com";
 
-  const enderecoMapa =
-    `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(endereco)}`;
+  const enderecoMapa=`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(endereco)}`;
+  const itensTexto=carrinho.map(i=>`- ${i.nome} x${i.quantidade} (R$ ${(i.preco*i.quantidade).toFixed(2)})`).join("\n");
 
-  const itensTexto = carrinho
-    .map(i => `- ${i.nome} x${i.quantidade} (R$ ${(i.preco*i.quantidade).toFixed(2)})`)
-    .join("\n");
+  let mensagem=`🍕 *NOVO PEDIDO - KF PIZZARIA*\n👤 *Nome:* ${nome}\n🧾 *Pedido:*\n${itensTexto}\n📍 *Endereço:* ${endereco}\n🌐 *Mapa:* ${enderecoMapa}\n💳 *Pagamento:* ${pagamento}${trocoTexto}${pixTexto}\n💰 *Total:* R$ ${total.toFixed(2)}${observacao?`\n📝 *Observação:* ${observacao}`:""}`;
 
-  const mensagem =
-`🍕 *NOVO PEDIDO - KF PIZZARIA*
-👤 *Nome:* ${nome}
+  // Envia para WhatsApp
+  const url=`https://wa.me/5521997437285?text=${encodeURIComponent(mensagem)}`;
+  window.open(url,"_blank");
 
-🧾 *Pedido:*
-${itensTexto}
+  // ================== ARMAZENAR NO LOCALSTORAGE ==================
+  // ================== SALVAR NO FIREBASE ==================
+db.collection("pedidos").add({
+  nome,
+  endereco,
+  pagamento,
+  troco: troco || "",
+  observacao,
+  itens: [...carrinho],
+  total,
+  status: "Pendente",
+  criadoEm: new Date()
+});
 
-📍 *Endereço:* ${endereco}
-🌐 *Mapa:* ${enderecoMapa}
 
-💳 *Pagamento:* ${pagamento}${trocoTexto}${pixTexto}
-💰 *Total:* R$ ${total.toFixed(2)}${observacao ? `\n📝 *Observação:* ${observacao}` : ""}`;
-
-  // WhatsApp
-  window.open(
-    "https://wa.me/5521997437285?text=" + encodeURIComponent(mensagem),
-    "_blank"
-  );
-
-  // 🔥 SALVAR NO FIREBASE (SEM localStorage)
-  db.collection("pedidos").add({
-    nome,
-    endereco,
-    pagamento,
-    troco: troco || "",
-    observacao,
-    itens: carrinho,
-    total,
-    status: "Pendente",
-    criadoEm: new Date()
-  });
-
-  carrinho = [];
-  atualizarCarrinho();
-  atualizarBotaoAdicionar();
+  // Limpar carrinho
+  carrinho=[]; atualizarCarrinho(); atualizarBotaoAdicionar();
   alert("Pedido enviado com sucesso!");
 }
+
+document.addEventListener("DOMContentLoaded",()=>{ renderPizzas(); renderTapiocas(); renderBebidas(); atualizarCarrinho(); atualizarBotaoAdicionar(); });
 </script>
 
 </body>
