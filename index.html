@@ -385,8 +385,23 @@ function finalizarPedido(){
   let mensagem=`🍕 *NOVO PEDIDO - KF PIZZARIA*\n👤 *Nome:* ${nome}\n🧾 *Pedido:*\n${itensTexto}\n📍 *Endereço:* ${endereco}\n🌐 *Mapa:* ${enderecoMapa}\n💳 *Pagamento:* ${pagamento}${trocoTexto}${pixTexto}\n💰 *Total:* R$ ${total.toFixed(2)}${observacao?`\n📝 *Observação:* ${observacao}`:""}`;
 
   // Envia para WhatsApp
-  const url=`https://wa.me/5521997437285?text=${encodeURIComponent(mensagem)}`;
-  window.open(url,"_blank");
+  // Envia para WhatsApp
+const url=`https://wa.me/5521997437285?text=${encodeURIComponent(mensagem)}`;
+window.open(url,"_blank");
+
+// 🔥 SALVAR NO FIREBASE (NOVO)
+salvarPedidoFirebase({
+  nome,
+  endereco,
+  pagamento,
+  troco: troco || "",
+  observacao,
+  itens: [...carrinho],
+  total
+});
+
+// (opcional por enquanto) localStorage pode ficar ou sair depois
+
 
   // ================== ARMAZENAR NO LOCALSTORAGE ==================
   const pedidos=JSON.parse(localStorage.getItem("pedidos")||"[]");
@@ -423,3 +438,4 @@ document.addEventListener("DOMContentLoaded",()=>{ renderPizzas(); renderTapioca
 
 </body>
 </html>
+
