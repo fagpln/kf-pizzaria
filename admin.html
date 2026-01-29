@@ -1,285 +1,79 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Painel Admin - KF Pizzaria</title>
-<style>
-body { font-family: Arial, sans-serif; background:#0e0e0e; color:#fff; padding:20px; }
-h1 { text-align:center; color:#00ff66; margin-bottom:20px; }
-
-/* ================= NAV ================= */
-nav { display:flex; justify-content:center; margin-bottom:20px; gap:15px; }
-nav button { padding:10px 20px; border:none; border-radius:6px; background:#111; color:#00ff66; cursor:pointer; transition:0.2s; }
-nav button.active, nav button:hover { background:#00ff66; color:#000; }
-
-/* ================= PEDIDOS ================= */
-#listaPedidos { display:flex; flex-wrap:wrap; gap:15px; }
-.pedido {
-    padding:15px;
-    border-radius:12px;
-    width:300px;
-    position:relative;
-    box-shadow:0 0 10px #00ff66;
-    transition: transform 0.2s, box-shadow 0.5s;
-}
-.pedido:hover { transform: scale(1.03); }
-.pedido strong { color:#00ff66; font-size:16px; }
-.pedido .itens { margin:10px 0; }
-
-/* Botões de status */
-.pedido button { padding:5px 8px; font-size:12px; border:none; border-radius:6px; cursor:pointer; margin-right:5px; }
-.remover { background:red; color:#fff; position:absolute; top:10px; right:10px; }
-.statusBtn { font-weight:bold; }
-.Pendente { background:#28a745; color:#fff; animation: neonPulse 1s infinite; }
-.EmPreparo { background:#ffc107; color:#000; }      
-.Entregue { background:#17a2b8; color:#fff; }       
-
-/* Botão imprimir centralizado abaixo dos status */
-.imprimir { 
-    display:block; 
-    margin:10px auto 0 auto; 
-    padding:6px 12px; 
-    font-size:13px; 
-    background:#00ff66; 
-    color:#000; 
-    border-radius:6px; 
-    cursor:pointer; 
-    font-weight:bold; 
-}
-
-/* Animação neon para novos pedidos */
-.novoPedido { box-shadow:0 0 15px #ff0; animation: piscar 2s ease-in-out 3; }
-@keyframes piscar { 0%,100%{box-shadow:0 0 15px #ff0;} 50%{box-shadow:0 0 30px #ff0;} }
-
-/* ================= RELATÓRIO ================= */
-#relatorioContainer { display:none; }
-input, select { padding:6px; border-radius:6px; border:none; margin-top:4px; width:200px; }
-label { display:block; margin-top:10px; }
-button.filterBtn { margin-top:10px; padding:8px 12px; border:none; border-radius:6px; background:#00ff66; color:#000; cursor:pointer; }
-table { width:100%; border-collapse:collapse; margin-top:20px; }
-table, th, td { border:1px solid #00ff66; }
-th, td { padding:8px; text-align:left; }
-th { background:#111; color:#00ff66; }
-tr:nth-child(even) { background:#1c1c1c; }
-
-/* ================= PRINT ================= */
-@media print {
-    body { background:#fff; color:#000; font-size:12px; }
-    .pedido { width:280px; box-shadow:none; border:none; margin:0; padding:5px; }
-    button, nav, #relatorioContainer { display:none; }
-    pre { font-family: monospace; font-size:12px; line-height:1.2; }
-}
-</style>
+  <meta charset="UTF-8">
+  <title>Painel Admin - KF Pizzaria</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<h1>📋 Painel Admin - KF Pizzaria</h1>
+  <h2>📋 Painel Admin - KF Pizzaria</h2>
 
-<nav>
-    <button class="active" onclick="mostrarAba('pedidos')">Pedidos</button>
-    <button onclick="mostrarAba('relatorio')">Relatório</button>
-</nav>
+  <div id="listaPedidos">
+    <p>Carregando pedidos...</p>
+  </div>
 
-<!-- ================= PEDIDOS ================= -->
-<div id="pedidosContainer">
-    <div id="listaPedidos"></div>
-</div>
+  <!-- Firebase -->
+  <script src="firebase.js"></script>
 
-<!-- ================= RELATÓRIO ================= -->
-<div id="relatorioContainer">
-    <label>Data Inicial: <input type="date" id="dataInicio"></label>
-    <label>Data Final: <input type="date" id="dataFim"></label>
-    <label>Tipo de Pedido:
-        <select id="tipoPedido">
-            <option value="">Todos</option>
-            <option value="delivery">Delivery</option>
-            <option value="retirada">Retirada</option>
-        </select>
-    </label>
-    <label>Forma de Pagamento:
-        <select id="formaPagamento">
-            <option value="">Todas</option>
-            <option value="dinheiro">Dinheiro</option>
-            <option value="cartao">Cartão</option>
-            <option value="pix">Pix</option>
-        </select>
-    </label>
-    <label><input type="checkbox" id="somenteTaxas"> Exibir somente taxas de entrega</label>
-    <button class="filterBtn" onclick="gerarRelatorio()">Gerar Relatório</button>
+  <script>
+    // Escuta pedidos em tempo real
+    db.collection("pedidos").onSnapshot(snapshot => {
+      const lista = document.getElementById("listaPedidos");
+      lista.innerHTML = "";
 
-    <div id="relatorio"></div>
-</div>
-
-<script>
-// ================= FUNÇÃO DE ABA =================
-function mostrarAba(aba){
-    document.getElementById("pedidosContainer").style.display = aba==='pedidos'?'block':'none';
-    document.getElementById("relatorioContainer").style.display = aba==='relatorio'?'block':'none';
-    document.querySelectorAll("nav button").forEach(b=>b.classList.remove("active"));
-    document.querySelector(`nav button[onclick="mostrarAba('${aba}')"]`).classList.add("active");
-}
-
-// ================= PEDIDOS =================
-function carregarPedidos() {
-    const div = document.getElementById("listaPedidos");
-    let pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
-
-    pedidos = pedidos.map(p => {
-        if(!p.status) p.status = "Pendente";
-        if(!p.horario) p.horario = new Date().toLocaleString();
-        if(!p.novo) p.novo = true; // Marca como novo pedido
-        return p;
-    });
-
-    pedidos.sort((a,b)=>{
-        const ordem = { "Pendente":0, "Em preparo":1, "Entregue":2 };
-        return ordem[a.status] - ordem[b.status];
-    });
-
-    localStorage.setItem("pedidos", JSON.stringify(pedidos));
-    div.innerHTML = "";
-
-    if(pedidos.length===0){
-        div.innerHTML = "<p>Nenhum pedido recebido ainda.</p>";
+      if (snapshot.empty) {
+        lista.innerHTML = "<p>Nenhum pedido ainda.</p>";
         return;
-    }
+      }
 
-    pedidos.forEach((p,i)=>{
-        const itens = p.itens.map(it => `${it.nome} x${it.quantidade}`).join("<br>");
-        let statusClass = p.status.replace(/\s/g,'');
-        let novoClass = p.novo ? 'novoPedido' : '';
+      snapshot.forEach(doc => {
+        const pedido = doc.data();
+        const id = doc.id;
 
-        const pedidoDiv = document.createElement("div");
-        pedidoDiv.className = `pedido ${statusClass} ${novoClass}`;
-        pedidoDiv.innerHTML = `
-            <strong>${p.nome}</strong> - <em>${p.horario}</em><br>
-            Endereço: ${p.endereco}<br>
-            <div class="itens"><strong>Itens:</strong><br>${itens}</div>
-            ${p.observacao?`<div><strong>Observação:</strong> ${p.observacao}</div>`:""}
-            <div style="margin-top:10px;">
-                <button class="statusBtn Pendente" onclick="atualizarStatus(${i}, 'Pendente')">⏳ Pendente</button>
-                <button class="statusBtn EmPreparo" onclick="atualizarStatus(${i}, 'Em preparo')">🍳 Em preparo</button>
-                <button class="statusBtn Entregue" onclick="atualizarStatus(${i}, 'Entregue')">✅ Entregue</button>
-            </div>
-            <button class="imprimir" onclick="imprimirPedido(${i})">🖨️ Imprimir</button>
-            <button class="remover" onclick="removerPedido(${i})">❌</button>
+        const itens = pedido.itens
+          .map(i => `${i.nome} x${i.quantidade}`)
+          .join("<br>");
+
+        lista.innerHTML += `
+          <div class="pedido">
+            <p><strong>👤 Nome:</strong> ${pedido.nome}</p>
+
+            <p><strong>🧾 Itens:</strong><br>${itens}</p>
+
+            <p><strong>💰 Total:</strong> R$ ${pedido.total.toFixed(2)}</p>
+
+            <p><strong>💳 Pagamento:</strong> ${pedido.pagamento}</p>
+
+            <p><strong>📍 Endereço:</strong> ${pedido.endereco}</p>
+
+            <p><strong>📌 Status:</strong> ${pedido.status}</p>
+
+            <button onclick="atualizarStatus('${id}', 'Em preparo')">
+              🍳 Em preparo
+            </button>
+
+            <button onclick="atualizarStatus('${id}', 'Saiu para entrega')">
+              🛵 Saiu para entrega
+            </button>
+
+            <button onclick="atualizarStatus('${id}', 'Entregue')">
+              ✅ Entregue
+            </button>
+          </div>
+          <hr>
         `;
-        div.appendChild(pedidoDiv);
-
-        // Remove destaque de novo após 6s
-        if(p.novo){
-            setTimeout(()=>{
-                p.novo = false;
-                localStorage.setItem("pedidos", JSON.stringify(pedidos));
-                pedidoDiv.classList.remove('novoPedido');
-            },6000);
-        }
-    });
-}
-
-function atualizarStatus(i,status){
-    let pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
-    pedidos[i].status = status;
-    localStorage.setItem("pedidos",JSON.stringify(pedidos));
-    carregarPedidos();
-}
-
-function removerPedido(i){
-    let pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
-    pedidos.splice(i,1);
-    localStorage.setItem("pedidos",JSON.stringify(pedidos));
-    carregarPedidos();
-}
-
-// ================= IMPRESSÃO =================
-function imprimirPedido(i){
-    let pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
-    const p = pedidos[i];
-    const itens = p.itens.map(it=>`${it.nome} x${it.quantidade}`).join("\n");
-
-    const conteudo = `
-KF PIZZARIA
-------------------------------
-Pedido: ${p.nome}
-Data/Hora: ${p.horario}
-Endereço: ${p.endereco}
-------------------------------
-ITENS:
-${itens}
-------------------------------
-Total: R$ ${p.total.toFixed(2)} - ${p.pagamento}${p.troco?` (Troco: R$ ${p.troco})`:''}
-Status: ${p.status}
-${p.observacao?`Observação: ${p.observacao}`:''}
-------------------------------
-Obrigado pela preferência!
-`;
-
-    const printWindow = window.open('','', 'width=300,height=500');
-    printWindow.document.write('<pre style="font-family: monospace; font-size:12px; line-height:1.2;">'+conteudo+'</pre>');
-    printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
-    printWindow.close();
-}
-
-// ================= RELATÓRIO =================
-function gerarRelatorio(){
-    let pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
-    
-    const dataInicio = document.getElementById("dataInicio").value;
-    const dataFim = document.getElementById("dataFim").value;
-    const tipoPedido = document.getElementById("tipoPedido").value;
-    const formaPagamento = document.getElementById("formaPagamento").value;
-    const somenteTaxas = document.getElementById("somenteTaxas").checked;
-
-    let filtrados = pedidos.filter(p=>{
-        let dataPedido = new Date(p.data || p.horario);
-        if(dataInicio && dataPedido < new Date(dataInicio)) return false;
-        if(dataFim && dataPedido > new Date(dataFim+"T23:59:59")) return false;
-        if(tipoPedido && p.tipo && p.tipo.toLowerCase() !== tipoPedido.toLowerCase()) return false;
-        if(formaPagamento && p.pagamento.toLowerCase() !== formaPagamento.toLowerCase()) return false;
-        if(somenteTaxas && (!p.taxaEntrega || p.taxaEntrega<=0)) return false;
-        return true;
+      });
     });
 
-    if(filtrados.length===0){
-        document.getElementById("relatorio").innerHTML="<p>Nenhum pedido encontrado.</p>";
-        return;
+    // Atualiza status do pedido
+    function atualizarStatus(id, status) {
+      db.collection("pedidos").doc(id).update({
+        status: status
+      });
     }
-
-    let html=`<table>
-        <tr>
-            <th>Data/Hora</th>
-            <th>Cliente</th>
-            <th>Tipo</th>
-            <th>Pagamento</th>
-            <th>Itens</th>
-            <th>Total</th>
-            <th>Taxa de Entrega</th>
-        </tr>`;
-
-    filtrados.forEach(p=>{
-        const itens = p.itens.map(it=>`${it.nome} x${it.quantidade}`).join("<br>");
-        html += `<tr>
-            <td>${p.horario || p.data}</td>
-            <td>${p.nome}</td>
-            <td>${p.tipo || "-"}</td>
-            <td>${p.pagamento}${p.troco?` (Troco: R$ ${p.troco})`:''}</td>
-            <td>${itens}</td>
-            <td>R$ ${p.total.toFixed(2)}</td>
-            <td>R$ ${p.taxaEntrega? p.taxaEntrega.toFixed(2):"0.00"}</td>
-        </tr>`;
-    });
-
-    html+="</table>";
-    document.getElementById("relatorio").innerHTML = html;
-}
-
-// Atualiza pedidos automaticamente
-setInterval(carregarPedidos,2000);
-document.addEventListener("DOMContentLoaded", carregarPedidos);
-</script>
+  </script>
 
 </body>
 </html>
