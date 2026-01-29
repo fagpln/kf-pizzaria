@@ -109,13 +109,23 @@ input,select,textarea{
   border-radius:6px;
   border:none;
 }
+.tamanho-pizza{
+  display:flex;
+  gap:10px;
+  margin-bottom:10px;
+}
+.tamanho-pizza button{
+  flex:1;
+  padding:10px;
+  font-weight:bold;
+}
 </style>
 </head>
 
 <body>
 
 <header>
-  <img src="logo-kf.png" alt="KF Pizzaria">
+  <img src="logo-kf.png" alt="KF Pizzaria & Tapiocaria">
 </header>
 
 <nav>
@@ -125,17 +135,18 @@ input,select,textarea{
 </nav>
 
 <section id="pizzas" class="ativo">
-  <h3>Pizzas</h3>
+  <div class="tamanho-pizza">
+    <button onclick="selecionarTamanho('25')">25cm</button>
+    <button onclick="selecionarTamanho('35')">35cm</button>
+  </div>
   <div id="listaPizzas"></div>
 </section>
 
 <section id="tapiocas">
-  <h3>Tapiocas</h3>
   <div id="listaTapiocas"></div>
 </section>
 
 <section id="bebidas">
-  <h3>Bebidas</h3>
   <div id="listaBebidas"></div>
 </section>
 
@@ -148,8 +159,8 @@ input,select,textarea{
   <div id="itensCarrinho"></div>
   <p><strong>Total: R$ <span id="totalCarrinho">0.00</span></strong></p>
 
-  <input id="nome" placeholder="Nome">
-  <input id="endereco" placeholder="Endereço">
+  <input id="nome" placeholder="Nome do cliente">
+  <input id="endereco" placeholder="Endereço completo">
   <select id="pagamento">
     <option value="">Forma de pagamento</option>
     <option value="dinheiro">Dinheiro</option>
@@ -163,16 +174,24 @@ input,select,textarea{
 
 <script>
 // ================= DADOS =================
-const pizzas=[
+const pizzas25=[
   {nome:"Mussarela",preco:24},
   {nome:"Calabresa",preco:24},
   {nome:"Portuguesa",preco:29},
   {nome:"BANANA com CANELA",preco:30}
 ];
 
+const pizzas35=[
+  {nome:"Mussarela",preco:39},
+  {nome:"Calabresa",preco:39},
+  {nome:"Portuguesa",preco:43},
+  {nome:"BANANA com CANELA",preco:45}
+];
+
 const tapiocas=[
   {nome:"Frango com Catupiry",preco:15},
-  {nome:"Calabresa",preco:12}
+  {nome:"Calabresa",preco:12},
+  {nome:"Queijo",preco:10}
 ];
 
 const bebidas=[
@@ -182,6 +201,7 @@ const bebidas=[
 
 let carrinho=[];
 let selecionados=[];
+let tamanhoPizza="";
 
 // ================= FUNÇÕES =================
 function mostrarMenu(id){
@@ -189,28 +209,66 @@ function mostrarMenu(id){
   document.getElementById(id).classList.add("ativo");
 }
 
-function render(lista,divId){
-  const div=document.getElementById(divId);
+function selecionarTamanho(t){
+  tamanhoPizza=t;
+  selecionados=[];
+  renderPizzas();
+}
+
+function renderPizzas(){
+  const lista=tamanhoPizza==="25"?pizzas25:pizzas35;
+  const div=document.getElementById("listaPizzas");
+  if(!tamanhoPizza){
+    div.innerHTML="<p>Escolha o tamanho da pizza</p>";
+    return;
+  }
   div.innerHTML="";
   lista.forEach((p,i)=>{
     const sel=selecionados.includes(p);
     div.innerHTML+=`
       <div class="produto">
         <span>${p.nome} — R$ ${p.preco.toFixed(2)}</span>
-        <button class="${sel?'selected':''}" onclick="toggleItem(${i},'${divId}')">
+        <button class="${sel?'selected':''}" onclick="toggleSelecionado('${i}','pizza')">
           ${sel?'Remover':'Selecionar'}
         </button>
       </div>`;
   });
 }
 
-function toggleItem(i,tipo){
-  let lista = tipo==="listaPizzas"?pizzas:tipo==="listaTapiocas"?tapiocas:bebidas;
+function renderTapiocas(){
+  const div=document.getElementById("listaTapiocas");
+  div.innerHTML="";
+  tapiocas.forEach((t,i)=>{
+    const sel=selecionados.includes(t);
+    div.innerHTML+=`
+      <div class="produto">
+        <span>${t.nome} — R$ ${t.preco.toFixed(2)}</span>
+        <button class="${sel?'selected':''}" onclick="toggleSelecionado('${i}','tapioca')">
+          ${sel?'Remover':'Selecionar'}
+        </button>
+      </div>`;
+  });
+}
+
+function renderBebidas(){
+  const div=document.getElementById("listaBebidas");
+  div.innerHTML="";
+  bebidas.forEach((b,i)=>{
+    div.innerHTML+=`
+      <div class="produto">
+        <span>${b.nome} — R$ ${b.preco.toFixed(2)}</span>
+        <button onclick="adicionarDireto(bebidas[${i}])">Adicionar</button>
+      </div>`;
+  });
+}
+
+function toggleSelecionado(i,tipo){
+  const lista=tipo==="pizza"?(tamanhoPizza==="25"?pizzas25:pizzas35):tapiocas;
   const item=lista[i];
   const idx=selecionados.indexOf(item);
   if(idx>=0) selecionados.splice(idx,1);
   else selecionados.push(item);
-  atualizar();
+  atualizarTela();
 }
 
 function adicionarSelecionados(){
@@ -223,6 +281,13 @@ function adicionarSelecionados(){
   atualizarCarrinho();
 }
 
+function adicionarDireto(item){
+  const ex=carrinho.find(i=>i.nome===item.nome);
+  if(ex) ex.q++;
+  else carrinho.push({nome:item.nome,preco:item.preco,q:1});
+  atualizarCarrinho();
+}
+
 function atualizarCarrinho(){
   const div=document.getElementById("itensCarrinho");
   const totalSpan=document.getElementById("totalCarrinho");
@@ -230,35 +295,36 @@ function atualizarCarrinho(){
   let total=0;
   carrinho.forEach((i,idx)=>{
     total+=i.preco*i.q;
-    div.innerHTML+=`${i.nome} x${i.q} — R$ ${(i.preco*i.q).toFixed(2)} <button onclick="carrinho.splice(${idx},1);atualizarCarrinho()">❌</button><br>`;
+    div.innerHTML+=`${i.nome} x${i.q} — R$ ${(i.preco*i.q).toFixed(2)}
+      <button onclick="carrinho.splice(${idx},1);atualizarCarrinho()">❌</button><br>`;
   });
   totalSpan.innerText=total.toFixed(2);
 }
 
-function finalizarPedido(){
-  if(carrinho.length===0){alert("Carrinho vazio");return;}
-  const nome=nome.value;
-  const endereco=endereco.value;
-  const pag=pagamento.value;
+function atualizarTela(){
+  renderPizzas();
+  renderTapiocas();
+  renderBebidas();
+}
 
-  let msg=`🍕 *NOVO PEDIDO*\n👤 ${nome}\n📍 ${endereco}\n`;
+function finalizarPedido(){
+  if(carrinho.length===0){ alert("Carrinho vazio"); return; }
+  const nome=document.getElementById("nome").value;
+  const endereco=document.getElementById("endereco").value;
+  const pagamento=document.getElementById("pagamento").value;
+
+  let msg=`🍕 *NOVO PEDIDO - KF*\n👤 ${nome}\n📍 ${endereco}\n`;
   carrinho.forEach(i=>{
     msg+=`- ${i.nome} x${i.q}\n`;
   });
-  msg+=`💰 Total: R$ ${totalCarrinho.innerText}\n💳 ${pag}`;
+  msg+=`💰 Total: R$ ${totalCarrinho.innerText}\n💳 ${pagamento}`;
 
   window.open(`https://wa.me/5521997437285?text=${encodeURIComponent(msg)}`);
   carrinho=[];
   atualizarCarrinho();
 }
 
-function atualizar(){
-  render(pizzas,"listaPizzas");
-  render(tapiocas,"listaTapiocas");
-  render(bebidas,"listaBebidas");
-}
-
-atualizar();
+atualizarTela();
 </script>
 
 </body>
