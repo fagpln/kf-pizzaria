@@ -1,16 +1,14 @@
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-<script>
-  const firebaseConfig = {
-    apiKey: "SUA_API_KEY",
-    authDomain: "SEU_AUTH_DOMAIN",
-    projectId: "SEU_PROJECT_ID",
-    storageBucket: "SEU_STORAGE_BUCKET",
-    messagingSenderId: "SEU_MESSAGING_SENDER_ID",
-    appId: "SEU_APP_ID"
-  };
+const firebaseConfig = {
+  apiKey: "AIzaSyCwlMy0RdhlCkjWwq2InuojeKtJimGUR9I",
+  authDomain: "kf-pizzaria.firebaseapp.com",
+  projectId: "kf-pizzaria",
+  storageBucket: "kf-pizzaria.firebasestorage.app",
+  messagingSenderId: "679614383644",
+  appId: "1:679614383644:web:c53a7230008c9e4ae1c1d9"
+};
 
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-</script>
+const app = initializeApp(firebaseConfig);
+export const db = getFirestore(app);
