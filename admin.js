@@ -1,65 +1,57 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin - KF Pizzaria</title>
+// 🔥 CONFIGURAÇÃO FIREBASE (A MESMA DO INDEX)
+const firebaseConfig = {
+  apiKey: "AIzaSyCwlMy0RdhlCkjWwq2InuojeKtJimGUR9I",
+  authDomain: "kf-pizzaria.firebaseapp.com",
+  projectId: "kf-pizzaria",
+  storageBucket: "kf-pizzaria.firebasestorage.app",
+  messagingSenderId: "679614383644",
+  appId: "1:679614383644:web:c53a7230008c9e4ae1c1d9"
+};
 
-<style>
-body{
-  font-family:Arial,sans-serif;
-  background:#0e0e0e;
-  color:#fff;
-  margin:0;
-  padding:20px;
-}
-h1{
-  text-align:center;
-  color:#00ff66;
-}
-.pedido{
-  background:#1c1c1c;
-  padding:15px;
-  border-radius:10px;
-  margin-bottom:15px;
-  box-shadow:0 0 8px #000;
-}
-.pedido h3{
-  margin:0 0 5px 0;
-  color:#00ff66;
-}
-.itens{
-  margin-left:10px;
-}
-.total{
-  font-weight:bold;
-  margin-top:8px;
-  color:#ffcc00;
-}
-small{
-  color:#aaa;
-}
-.vazio{
-  text-align:center;
-  color:#999;
-  margin-top:50px;
-}
-</style>
-</head>
+// Inicializa Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-<body>
+const lista = document.getElementById("listaPedidos");
 
-<h1>📋 Pedidos Recebidos</h1>
+// 🔄 ESCUTA PEDIDOS EM TEMPO REAL
+db.collection("pedidos")
+  .orderBy("data", "desc")
+  .onSnapshot(snapshot => {
 
-<div id="listaPedidos" class="vazio">
-Carregando pedidos...
-</div>
+    if (snapshot.empty) {
+      lista.innerHTML = "<p class='vazio'>Nenhum pedido ainda</p>";
+      return;
+    }
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    lista.innerHTML = "";
 
-<script src="admin.js"></script>
+    snapshot.forEach(doc => {
+      const p = doc.data();
 
-</body>
-</html>
+      let itensHtml = "";
+      p.itens.forEach(i => {
+        itensHtml += `<div>- ${i.nome} x${i.quantidade}</div>`;
+      });
+
+      const data = p.data?.toDate
+        ? p.data.toDate().toLocaleString("pt-BR")
+        : "";
+
+      lista.innerHTML += `
+        <div class="pedido">
+          <h3>${p.nome}</h3>
+          <small>${data}</small>
+          <p><strong>Endereço:</strong> ${p.endereco}</p>
+          <div class="itens">${itensHtml}</div>
+          <p><strong>Pagamento:</strong> ${p.pagamento}</p>
+          ${p.troco ? `<p><strong>Troco:</strong> ${p.troco}</p>` : ""}
+          ${p.observacao ? `<p><strong>Obs:</strong> ${p.observacao}</p>` : ""}
+          <div class="total">💰 Total: R$ ${p.total.toFixed(2)}</div>
+        </div>
+      `;
+    });
+  }, error => {
+    lista.innerHTML = "<p class='vazio'>Erro ao carregar pedidos</p>";
+    console.error(error);
+  });
