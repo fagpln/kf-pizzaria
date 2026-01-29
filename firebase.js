@@ -14,3 +14,15 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
 </script>
+// ================== SALVAR NO FIREBASE ==================
+db.collection("pedidos").add({
+  nome,
+  endereco,
+  pagamento,
+  troco: troco || "",
+  observacao,
+  itens: [...carrinho],
+  total,
+  status: "Pendente",
+  criadoEm: new Date()
+});
